@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>门</title>
+<style>body{background:#0f1720;color:#cfe;font:16px/1.6 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}a{color:#7fd}</style>
+</head><body><div id="t">正在找门…</div>
+<script>
+(async () => {
+  const box = document.getElementById('t');
+  const api = 'https://api.github.com/repos/Bay-beep/whale-door/contents/doorway.txt';
+  let door = '';
+  try {
+    const r = await fetch(api, {cache:'no-store'});
+    const j = await r.json();
+    door = atob((j.content||'').replace(/\s/g,'')).trim();
+  } catch (e) {}
+  if (!door) {
+    try { door = (await (await fetch('https://cdn.jsdelivr.net/gh/Bay-beep/whale-door@main/doorway.txt',{cache:'no-store'})).text()).trim(); } catch (e) {}
+  }
+  if (door) { box.innerHTML = '带你过去…<br><a href="'+door+'">'+door+'</a>'; location.replace(door); }
+  else { box.textContent = '门牌没读到，稍后再开一次'; }
+})();
+</script></body></html>
