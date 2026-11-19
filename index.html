@@ -1,1 +1,78 @@
-<!doctype html><meta charset="utf-8"><title>门</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{background:#111;color:#ddd;font:16px/1.8 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}a{color:#7cc}</style><p>正在进去…<br><a href="https://holly-knit-pose-fence.trycloudflare.com/login.html">门在这，点不开就用这个</a></p><script>location.replace("https://holly-knit-pose-fence.trycloudflare.com/login.html"+location.hash)</script>
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>正在找门…</title>
+<style>
+  body{margin:0;background:#0d1117;color:#c9d1d9;font:15px/1.7 system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
+  .box{text-align:center;padding:24px}
+  a{color:#58a6ff}
+  small{color:#6e7681}
+</style>
+</head>
+<body>
+<div class="box">
+  <p id="doorHint">正在找门…</p>
+  <p><small id="doorSub">要是卡住，过十几秒刷新一次</small></p>
+</div>
+<script>
+/* 门牌 v3：三个源并行问、探活、失败重试（2026-11-19 夜） */
+(function () {
+  var SOURCES = [
+    'https://raw.githubusercontent.com/Bay-beep/whale-door/main/doorway.txt',
+    'https://api.github.com/repos/Bay-beep/whale-door/contents/doorway.txt',
+    'https://cdn.jsdelivr.net/gh/Bay-beep/whale-door@main/doorway.txt'
+  ]
+  var KEY = 'whale-door-last'
+  var hint = document.getElementById('doorHint')
+  var sub = document.getElementById('doorSub')
+
+  function clean(s){ s = String(s||'').trim().split(/\s+/)[0]; return /^https?:\/\//.test(s) ? s.replace(/\/+$/,'') : '' }
+  function fromRaw(r){ return r.text() }
+  function fromApi(r){ return r.json().then(function(j){
+    if(!j||!j.content) return ''
+    try{ return decodeURIComponent(escape(atob(String(j.content).replace(/\s/g,'')))) }catch(e){ return '' }
+  })}
+  function read(url,pick){
+    var ctl=new AbortController(), t=setTimeout(function(){ctl.abort()},3500)
+    return fetch(url+(url.indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store',signal:ctl.signal})
+      .then(function(r){return r.ok?pick(r):''}).then(function(v){clearTimeout(t);return clean(v)})
+      .catch(function(){clearTimeout(t);return ''})
+  }
+  function alive(u){
+    return new Promise(function(res){
+      var img=new Image(), done=false, t=setTimeout(function(){if(!done){done=true;res(false)}},4000)
+      img.onload=function(){if(!done){done=true;clearTimeout(t);res(true)}}
+      img.onerror=function(){if(!done){done=true;clearTimeout(t);res(false)}}
+      img.src=u+'/icon-192.png?t='+Date.now()
+    })
+  }
+  function go(u){
+    try{ localStorage.setItem(KEY,u) }catch(e){}
+    location.replace(u+'/login.html'+location.hash)
+  }
+  function attempt(round){
+    Promise.all([read(SOURCES[0],fromRaw),read(SOURCES[1],fromApi),read(SOURCES[2],fromRaw)]).then(function(list){
+      var cands=[]; list.forEach(function(u){ if(u&&cands.indexOf(u)<0) cands.push(u) })
+      var last=''; try{ last=localStorage.getItem(KEY)||'' }catch(e){}
+      if(last&&cands.indexOf(last)<0) cands.push(last)
+      var i=0
+      function next(){
+        if(i>=cands.length) return false
+        var u=cands[i++]
+        return alive(u).then(function(ok){ return ok? (go(u),true) : next() })
+      }
+      return next()
+    }).then(function(ok){
+      if(ok) return
+      if(round<5){ hint.textContent='门那边还没开，我再试一次…'; setTimeout(function(){attempt(round+1)},4000); return }
+      hint.innerHTML='进不去 —— 门那边断了。'
+      sub.innerHTML='<a href="https://bay-beep.github.io/whale-door/">再试一次</a>'
+    })
+  }
+  attempt(1)
+})()
+</script>
+</body>
+</html>
