@@ -1,1 +1,1 @@
-https://searching-forge-cooper-allied.trycloudflare.com
+https://api.trycloudflare.com
