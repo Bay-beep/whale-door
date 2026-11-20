@@ -1,1 +1,33 @@
-<!doctype html><meta charset="utf-8"><title>门</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{background:#111;color:#ddd;font:16px/1.8 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}a{color:#7cc}</style><p>正在进去…<br><a href="https://prevention-casino-seas-shades.trycloudflare.com/login.html">门在这，点不开就用这个</a></p><script>location.replace("https://prevention-casino-seas-shades.trycloudflare.com/login.html"+location.hash)</script>
+<!doctype html><meta charset="utf-8"><title>门</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{background:#111;color:#ddd;font:16px/1.8 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}a{color:#7cc}</style>
+<p id="t">正在进去…<br><a id="a" href="#">门在这，点不开就用这个</a></p>
+<script>
+(function(){
+  var S=["https://raw.githubusercontent.com/Bay-beep/whale-door/main/doorway.txt",
+         "https://api.github.com/repos/Bay-beep/whale-door/contents/doorway.txt",
+         "https://cdn.jsdelivr.net/gh/Bay-beep/whale-door@main/doorway.txt"];
+  var n=0;
+  function clean(s){s=String(s||'').trim().split(/\s+/)[0];return /^https?:\/\//.test(s)?s.replace(/\/+$/,''):''}
+  function read(u){return fetch(u+(u.indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store'})
+    .then(function(r){if(!r.ok)return '';return u.indexOf('api.github.com')>0?r.json().then(function(j){try{return decodeURIComponent(escape(atob(String(j.content).replace(/\s/g,''))))}catch(e){return ''}}):r.text()})
+    .then(clean).catch(function(){return ''})}
+  function alive(u){return new Promise(function(res){var i=new Image(),t=setTimeout(function(){res(false)},4000);
+    i.onload=function(){clearTimeout(t);res(true)};i.onerror=function(){clearTimeout(t);res(false)};
+    i.src=u+'/icon-192.png?t='+Date.now()})}
+  function tryNext(){ if(n++>6){document.getElementById('t').innerHTML='暂时没找到开着的门，等会儿再刷';return}
+    Promise.all(S.map(read)).then(function(list){
+      var seen={}, cands=list.filter(function(u){if(!u||seen[u])return false;seen[u]=1;return true});
+      if(!cands.length){setTimeout(tryNext,3000);return}
+      var i=0;(function step(){
+        if(i>=cands.length){setTimeout(tryNext,3000);return}
+        var u=cands[i++];alive(u).then(function(ok){
+          if(ok){var d=document.getElementById('a');d.href=u+'/login.html'+location.hash;location.replace(d.href)}
+          else step();
+        });
+      })();
+    });
+  }
+  tryNext();
+})();
+</script>
