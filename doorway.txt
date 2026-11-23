@@ -1,1 +1,1 @@
-https://outreach-douglas-christ-kenneth.trycloudflare.com
+https://api.trycloudflare.com
