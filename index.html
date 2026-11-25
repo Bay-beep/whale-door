@@ -1,1 +1,78 @@
-<!doctype html><meta charset="utf-8"><title>门</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{background:#111;color:#ddd;font:16px/1.8 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}a{color:#7cc}</style><p>正在进去…<br><a href="https://climb-doing-appears-remained.trycloudflare.com/login.html">门在这，点不开就用这个</a></p><script>location.replace("https://climb-doing-appears-remained.trycloudflare.com/login.html"+location.hash)</script>
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>门</title>
+<style>body{background:#0f1720;color:#cfe;font:16px/1.6 system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}a{color:#7fd}small{opacity:.6}</style>
+</head><body><div id="t">正在找门…</div>
+<script>
+(function(){
+  var box = document.getElementById('t');
+  // 三个源并行问，谁先给到地址算谁的；地址一律探活，不活就不跳
+  var SOURCES = [
+    ['https://raw.githubusercontent.com/Bay-beep/whale-door/main/doorway.txt','text'],
+    ['https://api.github.com/repos/Bay-beep/whale-door/contents/doorway.txt','api'],
+    ['https://cdn.jsdelivr.net/gh/Bay-beep/whale-door@main/doorway.txt','text']
+  ];
+  var KEY='whale-door-last';
+  var hash=location.hash||'';
+
+  function clean(s){
+    s=String(s||'').trim().split(/\s+/)[0];
+    return /^https?:\/\//.test(s)?s.replace(/\/+$/,''):'';
+  }
+  function read(src){
+    var ctl=new AbortController(), t=setTimeout(function(){ctl.abort()},4000);
+    return fetch(src[0]+(src[0].indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store',signal:ctl.signal})
+      .then(function(r){return r.ok?r.text():''})
+      .then(function(txt){
+        clearTimeout(t);
+        if(src[1]==='api'){
+          try{
+            var j=JSON.parse(txt);
+            if(j&&j.content){
+              return clean(decodeURIComponent(escape(atob(String(j.content).replace(/\s/g,'')))));
+            }
+          }catch(e){}
+        }
+        return clean(txt);
+      })
+      .catch(function(){clearTimeout(t);return ''});
+  }
+  // 用一张图探活：这扇门现在还通不通
+  function alive(u){
+    return new Promise(function(res){
+      var img=new Image(), done=false;
+      var t=setTimeout(function(){if(!done){done=true;res(false)}},4000);
+      img.onload=function(){if(!done){done=true;clearTimeout(t);res(true)}};
+      img.onerror=function(){if(!done){done=true;clearTimeout(t);res(false)}};
+      img.src=u+'/icon-192.png?t='+Date.now();
+    });
+  }
+  function go(u){
+    try{localStorage.setItem(KEY,u)}catch(e){}
+    box.innerHTML='正在进去…';
+    location.replace(u+'/login.html'+hash);
+  }
+  function attempt(round){
+    Promise.all(SOURCES.map(read)).then(function(vs){
+      var cands=[];
+      vs.forEach(function(u){if(u&&cands.indexOf(u)<0)cands.push(u)});
+      var last=''; try{last=localStorage.getItem(KEY)||''}catch(e){}
+      if(last&&cands.indexOf(last)<0)cands.push(last);
+      if(!cands.length) return false;
+      var i=0;
+      function next(){
+        if(i>=cands.length) return false;
+        var u=cands[i++];
+        return alive(u).then(function(ok){return ok?go(u):next()});
+      }
+      return next();
+    }).then(function(ok){
+      if(ok) return;
+      if(round<4){setTimeout(function(){attempt(round+1)},4000);return}
+      box.innerHTML='门没找到，等一下再刷新<br><small>或者把这个页面拍下来发给他</small>';
+    });
+  }
+  attempt(1);
+})();
+</script></body></html>
